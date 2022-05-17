@@ -117,32 +117,62 @@
         }
     </style>
     <script>
-        const getUsers = () => {
-
-            //make get request
-            $.ajax({
-                url: "test1.php",
-                type: "get",
-                success: function(data) {
-                    console.log( data);
-                }
-            });
-        }
-        getUsers();
-
-
         $(document).ready(function() {
             $('[data-toggle="tooltip"]').tooltip();
+            let i = 2;
+            let flag = false;
             var actions = $(`<td>
                             <a class="add" title="Add" data-toggle="tooltip"><i class="material-icons">&#xE03B;</i></a>
                             <a class="edit" title="Edit" data-toggle="tooltip"><i class="material-icons">&#xE254;</i></a>
                             <a class="delete" title="Delete" data-toggle="tooltip"><i class="material-icons">&#xE872;</i></a>
                         </td>`).html();
+            var actions1 = $(`<td>
+                            <a class="edit" title="Edit" data-toggle="tooltip"><i class="material-icons">&#xE254;</i></a>
+                            <a class="add" title="Add" data-toggle="tooltip"><i class="material-icons">&#xE03B;</i></a>
+                            <a class="delete" title="Delete" data-toggle="tooltip"><i class="material-icons">&#xE872;</i></a>
+                        </td>`).html();
+
+
+            // showing data from database 
+
+            const getUsers = () => {
+                // <input type="text" class="form-control" name="name" id="name">
+                // <input type="text" class="form-control" name="department" id="department">
+                //make get request
+                $.ajax({
+                    url: "test1.php",
+                    type: "get",
+                    success: function(data) {
+                        console.log(typeof data);
+                        const data1 = JSON.parse(data);
+                        console.log(data1.length);
+                        for (i = 2; i <= data1.length + 1; i++) {
+                            var index = $("table tbody tr:last-child").index();
+                            console.log('useid',data1[i-2].userid);
+                            var row = `<tr id="${data1[i-2].userid}">` +
+                                `<td>${data1[i-2].name}</td>` +
+                                `<td>${data1[i-2].email}</td>` +
+                                // '<td><input type="text" class="form-control" name="phone" id="phone"></td>' +
+                                '<td>' + actions1 + '</td>' +
+                                '</tr>';
+                            $("table").append(row);
+                            $("table tbody tr").eq(index + i).find(".edit, .add").toggle();
+                            $('[data-toggle="tooltip"]').tooltip();
+                        }
+                    }
+                });
+            }
+            getUsers();
+
+
             // Append table with add row form on add new button click
+            let userid = '';
             $(".add-new").click(function() {
+                flag = false;
                 $(this).attr("disabled", "disabled");
                 var index = $("table tbody tr:last-child").index();
-                var row = '<tr>' +
+                userid = Date.now();
+                var row = `<tr id="${userid}">` +
                     '<td><input type="text" class="form-control" name="name" id="name"></td>' +
                     '<td><input type="text" class="form-control" name="department" id="department"></td>' +
                     // '<td><input type="text" class="form-control" name="phone" id="phone"></td>' +
@@ -156,6 +186,9 @@
             $(document).on("click", ".add", function() {
                 var empty = false;
                 var input = $(this).parents("tr").find('input[type="text"]');
+                console.log($(this).parents("tr")[0].id);
+                let id = $(this).parents("tr")[0].id;
+                console.log('id', id);
                 input.each(function() {
                     if (!$(this).val()) {
 
@@ -179,21 +212,36 @@
                         } else {
                             email = $(this).val();
                         }
-
                     });
                     console.log(name, email);
                     //make post request
-                    $.ajax({
-                        url: "test1.php",
-                        type: "post",
-                        data: {
-                            name,
-                            email
-                        },
-                        success: function(data) {
-                            console.log(data);
-                        }
-                    });
+                    if (flag==false) {
+                        $.ajax({
+                            url: "test1.php",
+                            type: "post",
+                            data: {
+                                name,
+                                email,
+                                userid
+                            },
+                            success: function(data) {
+                                console.log(data);
+                            }
+                        });
+                    }else{
+                        $.ajax({
+                            url: "test1.php",
+                            type: "post",
+                            data: {
+                                name,
+                                email,
+                                id
+                            },
+                            success: function(data) {
+                                console.log(data);
+                            }
+                        });
+                    }
 
                     $(this).parents("tr").find(".add, .edit").toggle();
                     $(".add-new").removeAttr("disabled");
@@ -201,6 +249,7 @@
             });
             // Edit row on edit button click
             $(document).on("click", ".edit", function() {
+                flag = true;
                 $(this).parents("tr").find("td:not(:last-child)").each(function() {
                     $(this).html('<input type="text" class="form-control" value="' + $(this).text() + '">');
                 });
@@ -210,6 +259,20 @@
             // Delete row on delete button click
             $(document).on("click", ".delete", function() {
                 $(this).parents("tr").remove();
+                console.log($(this).parents("tr")[0].id);
+                let delid = $(this).parents("tr")[0].id;
+
+                $.ajax({
+                            url: "test1.php",
+                            type: "post",
+                            data: {
+                                delid
+                            },
+                            success: function(data) {
+                                console.log(data);
+                            }
+                        });
+
                 $(".add-new").removeAttr("disabled");
             });
         });
